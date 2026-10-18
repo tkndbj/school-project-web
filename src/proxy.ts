@@ -35,7 +35,11 @@ function buildCsp(nonce: string) {
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
-    ...(isDev ? [] : ["upgrade-insecure-requests"]),
+    ...(["production", "staging"].includes(
+      process.env.NEXT_PUBLIC_APP_ENV ?? "",
+    )
+      ? ["upgrade-insecure-requests"]
+      : []),
   ].join("; ");
 }
 
