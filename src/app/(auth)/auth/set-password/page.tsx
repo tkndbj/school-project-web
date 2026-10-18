@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { SetPasswordForm } from "@/features/auth/components/set-password-form";
-import { requireUser } from "@/server/auth";
+import { requirePasswordChangeSession } from "@/server/password-session";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("auth");
@@ -9,6 +9,6 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function SetPasswordPage() {
-  const user = await requireUser("/auth/set-password");
+  const { user } = await requirePasswordChangeSession();
   return <SetPasswordForm email={user.email} />;
 }

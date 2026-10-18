@@ -59,5 +59,6 @@ jobs:
       - run: npm run start > /tmp/school-web.log 2>&1 &
       - run: node scripts/wait-for-server.mjs
       - run: npm run test:authenticated
+      - run: node scripts/verify-password-recovery.mjs
       - run: npx supabase stop --no-backup
         if: always()

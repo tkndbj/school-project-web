@@ -6,6 +6,10 @@ import { failWith, ok, type ActionResult } from "@/lib/errors";
 import { publicEnv } from "@/lib/env";
 import { safeNextPath } from "@/lib/navigation";
 import { createServerSupabase } from "@/server/supabase";
+import {
+  PASSWORD_MFA_PATH,
+  requirePasswordChangeSession,
+} from "@/server/password-session";
 import { passwordSchema } from "./schema";
 
 const signInSchema = z.object({
@@ -85,14 +89,15 @@ export async function setPassword(
   const parsed = setPasswordSchema.safeParse(input);
   if (!parsed.success) return failWith("invalidValue");
 
-  const supabase = await createServerSupabase();
-  const { data: claims } = await supabase.auth.getClaims();
-  if (!claims?.claims?.sub) return failWith("forbidden");
-
+  const { supabase } = await requirePasswordChangeSession();
   const { error } = await supabase.auth.updateUser({
     password: parsed.data.password,
   });
   if (error) {
+    // Auth remains authoritative if MFA enrollment/session state changed
+    // between the form render, the preflight above and the update request.
+    if (error.code === "insufficient_aal") redirect(PASSWORD_MFA_PATH);
+    if (error.status === 429) return failWith("rateLimited");
     const key =
       error.code === "weak_password"
         ? "weakPassword"
