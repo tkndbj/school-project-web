@@ -46,7 +46,8 @@ Platform users must enroll and verify TOTP MFA in the web UI before accessing
 school data. Create real school administrators through the platform invitation
 flow. Configure custom SMTP, the supplied invite/recovery templates, exact
 production redirect URLs, rate limits and Google OAuth clients before launch.
-Disable public email signup; Google signup may remain enabled for new parents.
+Disable public account registration, keep the Email provider enabled for invited
+users, and enable Google only after its OAuth configuration is complete.
 Never expose the secret key or database URL in a `NEXT_PUBLIC_` variable or mobile
 `dart-define` file. Rotate credentials if they have been exposed.
 

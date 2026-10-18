@@ -32,6 +32,18 @@ async function signedIn(kind) {
   return db;
 }
 try {
+  const anonymous = createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const signup = await anonymous.auth.signUp({
+    email: "uninvited@demo.school.example",
+    password: "TestOnlyUninvitedAccount12!",
+  });
+  assert.equal(
+    signup.error?.code,
+    "signup_disabled",
+    "Public registration is disabled while invited email login remains enabled",
+  );
   const parent = await signedIn("parent"),
     other = await signedIn("otherParent"),
     staff = await signedIn("staff");

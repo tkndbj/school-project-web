@@ -35,7 +35,9 @@ After Vercel assigns the real HTTPS domain:
 2. Configure your SMTP sender and copy the invitation/recovery templates from
    `supabase/templates`. Supabase's default mail service is not a production SMTP
    service. Verify invitation and recovery delivery using your own account.
-3. Disable public email signups. Staff and parents receive school invitations;
+3. Disable **Allow new users to sign up**, while keeping the **Email provider**
+   enabled. Disabling the provider would also disable existing password logins.
+   Staff and parents receive school invitations;
    parents can sign in with email/password. If enabling Google for parents,
    configure the Google provider and OAuth redirect URL first, then enable the
    web flag and supply the mobile OAuth client IDs.
