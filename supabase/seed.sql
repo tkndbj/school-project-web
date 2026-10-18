@@ -1,0 +1,2 @@
+-- Deliberately empty. Test/demo accounts are created through the Auth Admin API
+-- with scripts/setup-demo.mjs, never through production migrations.

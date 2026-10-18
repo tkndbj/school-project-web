@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <body style="margin:0;padding:24px;background:#f5f6f8;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#111827">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;padding:32px">
+      <tr><td>
+        <h1 style="font-size:20px;margin:0 0 16px">You have been invited to School Platform</h1>
+        <p style="font-size:15px;line-height:1.6;margin:0 0 24px">
+          Your school has invited you to School Platform. Click the button below to choose your password.
+        </p>
+        <p style="margin:0 0 24px">
+          <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=invite"
+             style="display:inline-block;background:#1d4ed8;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:600">
+            Accept invitation / Daveti kabul et
+          </a>
+        </p>
+        <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
+        <h2 style="font-size:17px;margin:0 0 12px">School Platform'a davet edildiniz</h2>
+        <p style="font-size:15px;line-height:1.6;margin:0 0 16px">
+          Okulunuz sizi School Platform'a davet etti. Şifrenizi belirlemek için yukarıdaki butona tıklayın.
+        </p>
+        <p style="font-size:12px;color:#6b7280;margin:24px 0 0">
+          If you did not expect this email you can ignore it. / Bu e-postayı beklemiyorsanız dikkate almayın.
+        </p>
+      </td></tr>
+    </table>
+  </body>
+</html>

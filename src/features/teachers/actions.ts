@@ -1,0 +1,93 @@
+"use server";
+
+import { refresh } from "next/cache";
+import { z } from "zod";
+import type { PickerItem } from "@/components/async-search-picker";
+import { fail, failWith, ok, type ActionResult } from "@/lib/errors";
+import { validationFailure } from "@/lib/validation";
+import { authorizeSchoolAction } from "@/server/auth";
+import { MEDIA_BUCKET } from "@/server/storage";
+import { createServerSupabase } from "@/server/supabase";
+import { getCustomFieldDefinitions } from "../custom-fields/queries";
+import { toCustomFieldPayload } from "../custom-fields/values";
+import { searchTeachers } from "./queries";
+import { teacherSchema, type TeacherInput } from "./schema";
+
+const uuid = z.uuid();
+
+async function authorize(schoolId: string, ...otherIds: string[]) {
+  if (![schoolId, ...otherIds].every((id) => uuid.safeParse(id).success)) return false;
+  return Boolean(await authorizeSchoolAction(schoolId));
+}
+
+async function toRow(schoolId: string, input: TeacherInput) {
+  const parsed = teacherSchema.safeParse(input);
+  if (!parsed.success) return { valid: false as const, failure: validationFailure(parsed.error) };
+  const definitions = await getCustomFieldDefinitions(schoolId, "teacher");
+  const { custom_fields, ...fields } = parsed.data;
+  return { valid: true as const, row: { ...fields, custom_fields: toCustomFieldPayload(definitions, custom_fields) } };
+}
+
+export async function createTeacher(schoolId: string, input: TeacherInput): Promise<ActionResult<{ id: string }>> {
+  if (!(await authorize(schoolId))) return failWith("forbidden");
+  const result = await toRow(schoolId, input);
+  if (!result.valid) return result.failure;
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase
+    .from("teachers")
+    .insert({ ...result.row, school_id: schoolId })
+    .select("id")
+    .single();
+  if (error) return fail(error, error.code === "23505" ? { staff_number: ["taken"] } : undefined);
+  return ok({ id: data.id });
+}
+
+export async function updateTeacher(schoolId: string, teacherId: string, input: TeacherInput): Promise<ActionResult> {
+  if (!(await authorize(schoolId, teacherId))) return failWith("forbidden");
+  const result = await toRow(schoolId, input);
+  if (!result.valid) return result.failure;
+  const supabase = await createServerSupabase();
+  const { error } = await supabase.from("teachers").update(result.row).eq("school_id", schoolId).eq("id", teacherId);
+  if (error) return fail(error, error.code === "23505" ? { staff_number: ["taken"] } : undefined);
+  refresh();
+  return ok();
+}
+
+export async function deleteTeacher(schoolId: string, teacherId: string): Promise<ActionResult> {
+  if (!(await authorize(schoolId, teacherId))) return failWith("forbidden");
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase
+    .from("teachers")
+    .delete()
+    .eq("school_id", schoolId)
+    .eq("id", teacherId)
+    .select("photo_path")
+    .maybeSingle();
+  if (error) return fail(error);
+  if (data?.photo_path) await supabase.storage.from(MEDIA_BUCKET).remove([data.photo_path]);
+  return ok();
+}
+
+export async function setTeacherPhoto(schoolId: string, teacherId: string, path: string | null): Promise<ActionResult> {
+  if (!(await authorize(schoolId, teacherId))) return failWith("forbidden");
+  if (path !== null && !path.startsWith(`${schoolId}/teachers/${teacherId}/`)) return failWith("invalidValue");
+  const supabase = await createServerSupabase();
+  const { data: current } = await supabase
+    .from("teachers")
+    .select("photo_path")
+    .eq("school_id", schoolId)
+    .eq("id", teacherId)
+    .maybeSingle();
+  const { error } = await supabase.from("teachers").update({ photo_path: path }).eq("school_id", schoolId).eq("id", teacherId);
+  if (error) return fail(error);
+  if (current?.photo_path && current.photo_path !== path) {
+    await supabase.storage.from(MEDIA_BUCKET).remove([current.photo_path]);
+  }
+  refresh();
+  return ok();
+}
+
+export async function searchTeachersAction(schoolId: string, q: string): Promise<ActionResult<PickerItem[]>> {
+  if (!(await authorize(schoolId))) return failWith("forbidden");
+  return ok(await searchTeachers(schoolId, q.slice(0, 100)));
+}
