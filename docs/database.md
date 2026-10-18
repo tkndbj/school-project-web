@@ -27,9 +27,17 @@ After sign-in, call `my_account_context()` to route the user:
   "is_platform_admin": false,           // MFA still required before data access
   "memberships": [{ "school_id", "school_name", "slug", "role", "logo_path",
                     "primary_color", "default_locale", "timezone", "enabled_modules": [] }],
+  "guardian_schools": [{ "school_id", "school_name" }],
   "children_count": 2
 }
 ```
+
+`guardian_schools` contains distinct active schools with a guardian record linked
+to the current account. A connected guardian can have zero children until school
+staff links that guardian to a student through `student_guardians`. Clients should
+show a connected, waiting-for-student state in this case. This field grants no
+student access; the guardian APIs still require an explicit student relationship.
+The field is additive and older clients can continue to use `children_count`.
 
 ## Tables (staff API, RLS-protected)
 
